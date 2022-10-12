@@ -26,14 +26,14 @@ class AuthenticatedSessionController extends Controller
      * @param  \App\Http\Requests\Auth\LoginRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(LoginRequest $request)
-    {
-        $request->authenticate();
+    // public function store(LoginRequest $request)
+    // {
+    //     $request->authenticate();
 
-        $request->session()->regenerate();
+    //     $request->session()->regenerate();
 
-        return redirect()->intended(RouteServiceProvider::HOME);
-    }
+    //     return redirect()->intended(RouteServiceProvider::HOME);
+    // }
 
     /**
      * Destroy an authenticated session.
@@ -50,5 +50,27 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    public function login(LoginRequest $request)
+    {
+        $data = $request->all();
+
+        $this->validate($request, [
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
+
+        if (Auth::attempt(['email' => $data['email'], 'password' => $data['password']])) {
+            if (Auth::user()->role == 'admin') {
+                return redirect()->route('admin.dashboard');
+            } else if (Auth::user()->role == 'author') {
+                return redirect()->route('author.dashboard');
+            } else {
+                return redirect()->route('home');
+            }
+        } else {
+            return redirect()->route('login')->with('error', 'Invalid email or password');
+        }
     }
 }
